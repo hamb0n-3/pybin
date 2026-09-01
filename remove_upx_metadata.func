@@ -1,0 +1,62 @@
+def remove_upx_metadata(binary: Path) -> None:
+
+    """Finds the UPX info string and truncates the file."""
+    file_path = Path
+    input_path = Path
+    
+    signature = b'upx'
+    try:
+        with open(input_path, 'rb') as f:
+            content = f.read()
+    except FileNotFoundError:
+        print(f"Error: Input file not found at '{input_path}'")
+        return
+
+    offset = content.find(signature)
+
+    if offset == -1:
+        print("UPX informational signature not found. File is unchanged.")
+        return
+
+    try:
+        with open(input_path, 'wb') as f:
+            f.write(content[:offset])
+        print(f"Successfully stripped UPX strings.")
+        print(f"New size:      {offset} bytes")
+        print(f"Output written to: {input_path}")
+    except IOError as e:
+        print(f"Error writing to output file: {e}")
+
+        # --- Configuration ---
+     # The file to modify
+    target_bytes = b"UPX!"                # The signature to find
+    replace_bytes = b"boDp"               # The bytes to replace it with
+    # ---------------------
+
+    # Ensure replacement is the same length
+    if len(target_bytes) != len(replace_bytes):
+        print("Error: Target and replacement bytes must be the same length.")
+        sys.exit(1)
+
+    try:
+        with open(file_path, "rb+") as f:
+            content = f.read()
+            
+            # Find all occurrences of the target bytes
+            offset = content.find(target_bytes)
+            count = 0
+            while offset != -1:
+                print(f"Found '{target_bytes.decode()}' at offset {offset}. Overwriting...")
+                # Go to the found offset and overwrite
+                f.seek(offset)
+                f.write(replace_bytes)
+                count += 1
+                # Look for the next occurrence after the current one
+                offset = content.find(target_bytes, offset + 1)
+            
+            print(f"\nDone. Replaced {count} occurrence(s).")
+
+    except FileNotFoundError:
+        print(f"Error: File not found at '{file_path}'")
+    except Exception as e:
+        print(f"An error occurred: {e}")
